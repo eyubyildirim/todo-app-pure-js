@@ -1,0 +1,109 @@
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+ul.todo-list {
+    padding: 0em;
+}
+
+li.todo-element {
+    list-style-type: none;
+    display: flex;
+    flex-direction: row;
+    border: 1px solid black;
+    border-radius: 8px;
+    margin-bottom: 0.5em;
+    padding: 0em 1em;
+    height: fit-content;
+}
+
+li.new-todo {
+    animation: new-todo 400ms 0ms ease-in forwards;
+}
+
+li.remove-todo {
+    animation: remove-todo 400ms 0ms ease-in forwards;
+    transform-origin: top;
+}
+
+@keyframes new-todo {
+    from {
+        margin-left: -105%;
+        margin-right: 105%;
+    }
+
+    to {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+@keyframes remove-todo {
+    from {
+        transform: rotateX(0deg);
+    }
+
+    to {
+        transform: rotateX(-90deg);
+    }
+}
+
+h6.todo-content {
+    font-size: large;
+    margin: 1em;
+    align-content: center;
+}
+
+h6.todo-desc {
+    width: 50%;
+}
+
+h6.todo-date {
+    text-align: center;
+    flex-grow: 1;
+}
+
+h6.todo-status {
+    flex-grow: 1;
+    text-align: end;
+}
+
+div.todo-actions {
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+}
+
+.todo-actions button.todo-action-button {
+    flex-grow: 1;
+    padding: 0.5em;
+    border-radius: 8px;
+    margin: 0.5em 0.25em;
+    background-color: transparent;
+    transition: background-color 0.1s ease, color 0.1s ease;
+
+    &:hover {
+        color: white;
+        cursor: pointer;
+    }
+}
+
+.todo-actions button.todo-action-button-delete {
+    color: red;
+    font-size: large;
+    border: 1px solid red;
+
+    &:hover {
+        background-color: red;
+    }
+}
+
+.todo-actions button.todo-action-button-complete {
+    color: lime;
+    font-size: large;
+    border: 1px solid lime;
+
+    &:hover {
+        background-color: lime;
+    }
+}
