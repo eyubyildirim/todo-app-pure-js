@@ -26,13 +26,18 @@ const addClass = (/** @type {HTMLElement | null} */ element, /** @type {string[]
 const renderTodos = (todos, oldTodos, ...classes) => {
     localStorage.setItem("todosList", JSON.stringify(todos));
 
+    if (todos.length === oldTodos.length) {
+        todos = todos.filter((todo, i) => !Object.keys(todo).every(v => todo[v] === oldTodos[i][v]))
+        oldTodos = []
+    }
+
     todos.forEach((todo) => {
         if (oldTodos.includes(todo)) {
             oldTodos.splice(oldTodos.indexOf(todo), 1);
             return;
         }
 
-        const todoElementLi = document.createElement("li");
+        const todoElementLi = document.getElementById(todo.id) ?? document.createElement("li");
 
         const todoElementDesc = document.createElement("h6");
         todoElementDesc.textContent = todo.desc;
@@ -41,7 +46,7 @@ const renderTodos = (todos, oldTodos, ...classes) => {
         todoElementDate.textContent = new Date(todo.createdAt).toLocaleDateString();
 
         const todoElementStatus = document.createElement("h6");
-        todoElementStatus.textContent = todo.status;
+        todoElementStatus.textContent = todo.status.toUpperCase();
 
         const todoElementActions = document.createElement("div");
 
@@ -52,20 +57,32 @@ const renderTodos = (todos, oldTodos, ...classes) => {
         todoElementDeleteButton.textContent = "Delete";
 
         todoElementDeleteButton.addEventListener("click", () => {
-            const oldTodos = [...todos];
+            const oldTodos = [...todos]
             todos.splice(todos.indexOf(todo), 1);
             renderTodos(todos, oldTodos, "remove-todo");
         });
-        todoElementCompleteButton.addEventListener("click", () => { });
-
-        const name = todo.desc.split(" ").join("-").toLowerCase();
+        todoElementCompleteButton.addEventListener("click", () => {
+            const oldTodos = structuredClone(todos)
+            console.log(oldTodos)
+            todos[todos.indexOf(todo)].status = "completed"
+            renderTodos(todos, oldTodos)
+        });
 
         todoElementLi.id = todo.id;
         addClass(todoElementLi, "todo-element");
 
         addClass(todoElementDesc, "todo-desc", "todo-content");
         addClass(todoElementDate, "todo-date", "todo-content");
-        addClass(todoElementStatus, "todo-status", "todo-content");
+        switch (todo.status) {
+            case "new":
+                addClass(todoElementStatus, "todo-status-new", "todo-status", "todo-content");
+                break;
+            case "completed":
+                addClass(todoElementStatus, "todo-status-completed", "todo-status", "todo-content");
+                break;
+            default:
+                addClass(todoElementStatus, "todo-status-new", "todo-status", "todo-content");
+        }
         addClass(todoElementActions, "todo-actions");
 
         addClass(
@@ -78,6 +95,10 @@ const renderTodos = (todos, oldTodos, ...classes) => {
             "todo-action-button",
             "todo-action-button-complete",
         );
+
+        if (document.getElementById(todo.id)) {
+            todoElementLi.innerHTML = ''
+        }
 
         todoElementActions.appendChild(todoElementDeleteButton);
         todoElementActions.appendChild(todoElementCompleteButton);
@@ -97,6 +118,8 @@ const renderTodos = (todos, oldTodos, ...classes) => {
                 { once: true },
             );
         }
+
+        if (document.getElementById(todo.id)) return;
 
         // @ts-ignore
         todoList.appendChild(todoElementLi);

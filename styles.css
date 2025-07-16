@@ -59,13 +59,25 @@ h6.todo-desc {
 }
 
 h6.todo-date {
-    text-align: center;
+    text-align: end;
     flex-grow: 1;
 }
 
 h6.todo-status {
-    flex-grow: 1;
-    text-align: end;
+    width: 15%;
+    text-align: center;
+    padding: 0.2em 1em;
+    border-radius: 8px;
+}
+
+h6.todo-status-new {
+    background-color: #fef08a;
+    color: #ca8a04;
+}
+
+h6.todo-status-completed {
+    background-color: #d9f99d;
+    color: #65a30d;
 }
 
 div.todo-actions {
