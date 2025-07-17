@@ -1,6 +1,7 @@
 // @ts-check
 
-// @ts-ignore
+/** @type {Todo[]} */
+// @ts-ignore 
 const todosState = JSON.parse(localStorage.getItem("todosList")) ?? [];
 
 /**
@@ -15,6 +16,25 @@ const todoInput = document.getElementById("new-todo-input");
 const todoButton = document.getElementById("new-todo-button");
 const todoList = document.getElementById("todo-list");
 
+todoList?.addEventListener('click', /** @type {(e: MouseEvent) => any} */(e) => {
+    if (e.target instanceof HTMLElement) {
+        console.log(e.target.id)
+        if (e.target.id.includes("delete")) {
+            // @ts-ignore
+            const todoIndex = todosState.findIndex(v => v.id === e.target.id.replace('complete-button-', ''))
+            const oldTodos = structuredClone(todosState)
+            todosState.splice(todoIndex, 1)
+            renderTodos(todosState, oldTodos, "remove-todo");
+        } else if (e.target.id.includes("complete")) {
+            // @ts-ignore
+            const todoIndex = todosState.findIndex(v => v.id === e.target.id.replace('complete-button-', ''))
+            const oldTodos = structuredClone(todosState)
+            todosState[todoIndex].status = 'completed'
+            renderTodos(todosState, oldTodos)
+        }
+    }
+})
+
 const addClass = (/** @type {HTMLElement | null} */ element, /** @type {string[]} */ ...className) => {
     if (!element) return;
     element.className += " " + className.join(" ");
@@ -24,6 +44,7 @@ const addClass = (/** @type {HTMLElement | null} */ element, /** @type {string[]
  * @type {(todos: Todo[], oldTodos: Todo[], ...classes: string[]) => void}
  */
 const renderTodos = (todos, oldTodos, ...classes) => {
+    console.log(todos);
     localStorage.setItem("todosList", JSON.stringify(todos));
 
     if (todos.length === oldTodos.length) {
@@ -32,56 +53,58 @@ const renderTodos = (todos, oldTodos, ...classes) => {
     }
 
     todos.forEach((todo) => {
-        if (oldTodos.includes(todo)) {
-            oldTodos.splice(oldTodos.indexOf(todo), 1);
+        const oldTodosIndex = oldTodos.findIndex(v => v.id === todo.id)
+        if (oldTodosIndex > -1) {
+            oldTodos.splice(oldTodosIndex, 1);
             return;
         }
 
         const todoElementLi = document.getElementById(todo.id) ?? document.createElement("li");
+        todoElementLi.id = todo.id;
+        todoElementLi.setAttribute('status', todo.status)
 
         const todoElementDesc = document.createElement("h6");
         todoElementDesc.textContent = todo.desc;
+        todoElementDesc.id = "desc-" + todo.id
 
         const todoElementDate = document.createElement("h6");
         todoElementDate.textContent = new Date(todo.createdAt).toLocaleDateString();
+        todoElementDate.id = "date-" + todo.id
 
-        const todoElementStatus = document.createElement("h6");
-        todoElementStatus.textContent = todo.status.toUpperCase();
+        const todoElementStatus = document.createElement("div");
+        todoElementStatus.id = "status-" + todo.id
 
         const todoElementActions = document.createElement("div");
 
         const todoElementCompleteButton = document.createElement("button");
         const todoElementDeleteButton = document.createElement("button");
+        todoElementCompleteButton.id = "complete-button-" + todo.id
+        todoElementDeleteButton.id = "delete-button-" + todo.id
 
-        todoElementCompleteButton.textContent = "Complete";
-        todoElementDeleteButton.textContent = "Delete";
+        const completeIcon = document.createElement('i')
+        completeIcon.classList.add("fa-solid", "fa-check")
+        todoElementCompleteButton.appendChild(completeIcon)
 
-        todoElementDeleteButton.addEventListener("click", () => {
-            const oldTodos = [...todos]
-            todos.splice(todos.indexOf(todo), 1);
-            renderTodos(todos, oldTodos, "remove-todo");
-        });
-        todoElementCompleteButton.addEventListener("click", () => {
-            const oldTodos = structuredClone(todos)
-            console.log(oldTodos)
-            todos[todos.indexOf(todo)].status = "completed"
-            renderTodos(todos, oldTodos)
-        });
+        const trashIcon = document.createElement('i')
+        trashIcon.classList.add("fa-solid", "fa-trash")
+        todoElementDeleteButton.appendChild(trashIcon)
 
-        todoElementLi.id = todo.id;
+        completeIcon.id = "complete-button-" + todo.id
+        trashIcon.id = "delete-button-" + todo.id
+
         addClass(todoElementLi, "todo-element");
 
         addClass(todoElementDesc, "todo-desc", "todo-content");
         addClass(todoElementDate, "todo-date", "todo-content");
         switch (todo.status) {
             case "new":
-                addClass(todoElementStatus, "todo-status-new", "todo-status", "todo-content");
+                addClass(todoElementStatus, "todo-status-new", "todo-status");
                 break;
             case "completed":
-                addClass(todoElementStatus, "todo-status-completed", "todo-status", "todo-content");
+                addClass(todoElementStatus, "todo-status-completed", "todo-status");
                 break;
             default:
-                addClass(todoElementStatus, "todo-status-new", "todo-status", "todo-content");
+                addClass(todoElementStatus, "todo-status-new", "todo-status");
         }
         addClass(todoElementActions, "todo-actions");
 
@@ -100,12 +123,26 @@ const renderTodos = (todos, oldTodos, ...classes) => {
             todoElementLi.innerHTML = ''
         }
 
-        todoElementActions.appendChild(todoElementDeleteButton);
         todoElementActions.appendChild(todoElementCompleteButton);
+        todoElementActions.appendChild(todoElementDeleteButton);
 
+        // todoElementDeleteButton.addEventListener("click", () => {
+        //     const oldTodos = [...todos]
+        //     todos.splice(todos.indexOf(todo), 1);
+        //     renderTodos(todos, oldTodos, "remove-todo");
+        // });
+        // todoElementCompleteButton.addEventListener("click", () => {
+        //     const oldTodos = [...todos]
+        //     todos[todos.indexOf(todo)] = {
+        //         ...todo,
+        //         status: 'complete'
+        //     }
+        //     renderTodos(todos, oldTodos)
+        // });
+
+        todoElementLi.appendChild(todoElementStatus);
         todoElementLi.appendChild(todoElementDesc);
         todoElementLi.appendChild(todoElementDate);
-        todoElementLi.appendChild(todoElementStatus);
         todoElementLi.appendChild(todoElementActions);
 
         if (classes.length > 0) {
@@ -118,7 +155,6 @@ const renderTodos = (todos, oldTodos, ...classes) => {
                 { once: true },
             );
         }
-
         if (document.getElementById(todo.id)) return;
 
         // @ts-ignore
