@@ -17,9 +17,10 @@ const todoInput = document.getElementById("new-todo-input");
 const todoDate = document.getElementById("new-todo-date")
 const todoButton = document.getElementById("new-todo-button");
 const todoList = document.getElementById("todo-list");
+const completedList = document.getElementById("completed-list")
 const newTodoDiv = document.getElementById("new-todo-div")
 
-todoList?.addEventListener('click', /** @type {(e: MouseEvent) => any} */(e) => {
+const buttonClickEvent = /** @type {(e: MouseEvent) => any} */(e) => {
     if (e.target instanceof HTMLElement) {
         console.log(e.target.id)
         if (e.target.id.includes("delete")) {
@@ -34,9 +35,19 @@ todoList?.addEventListener('click', /** @type {(e: MouseEvent) => any} */(e) => 
             const oldTodos = structuredClone(todosState)
             todosState[todoIndex].status = 'completed'
             renderTodos(todosState, oldTodos)
+        } else if (e.target.id.includes("revert")) {
+            // @ts-ignore
+            const todoIndex = todosState.findIndex(v => v.id === e.target.id.replace('revert-button-', ''))
+            const oldTodos = structuredClone(todosState)
+            todosState[todoIndex].status = 'new'
+            renderTodos(todosState, oldTodos)
         }
     }
-})
+}
+
+todoList?.addEventListener('click', buttonClickEvent)
+
+completedList?.addEventListener('click', buttonClickEvent)
 
 const addClass = (/** @type {HTMLElement | null} */ element, /** @type {string[]} */ ...className) => {
     if (!element) return;
@@ -64,7 +75,6 @@ const renderTodos = (todos, oldTodos, ...classes) => {
 
         const todoElementLi = document.getElementById(todo.id) ?? document.createElement("li");
         todoElementLi.id = todo.id;
-        todoElementLi.setAttribute('status', todo.status)
 
         const todoElementDesc = document.createElement("h6");
         todoElementDesc.textContent = todo.desc;
@@ -80,9 +90,11 @@ const renderTodos = (todos, oldTodos, ...classes) => {
         const todoElementActions = document.createElement("div");
 
         const todoElementCompleteButton = document.createElement("button");
+        const todoElementRevertButton = document.createElement("button");
         const todoElementDeleteButton = document.createElement("button");
         todoElementCompleteButton.id = "complete-button-" + todo.id
         todoElementDeleteButton.id = "delete-button-" + todo.id
+        todoElementRevertButton.id = "revert-button-" + todo.id
 
         const completeIcon = document.createElement('i')
         completeIcon.classList.add("fa-solid", "fa-check")
@@ -92,8 +104,13 @@ const renderTodos = (todos, oldTodos, ...classes) => {
         trashIcon.classList.add("fa-solid", "fa-trash")
         todoElementDeleteButton.appendChild(trashIcon)
 
+        const revertIcon = document.createElement('i')
+        revertIcon.classList.add("fa-solid", "fa-clock-rotate-left")
+        todoElementRevertButton.appendChild(revertIcon)
+
         completeIcon.id = "complete-button-" + todo.id
         trashIcon.id = "delete-button-" + todo.id
+        revertIcon.id = "revert-button-" + todo.id
 
         addClass(todoElementLi, "todo-element");
 
@@ -102,9 +119,11 @@ const renderTodos = (todos, oldTodos, ...classes) => {
         switch (todo.status) {
             case "new":
                 addClass(todoElementStatus, "todo-status-new", "todo-status");
+                todoElementActions.appendChild(todoElementCompleteButton);
                 break;
             case "completed":
                 addClass(todoElementStatus, "todo-status-completed", "todo-status");
+                todoElementActions.appendChild(todoElementRevertButton);
                 break;
             default:
                 addClass(todoElementStatus, "todo-status-new", "todo-status");
@@ -121,12 +140,16 @@ const renderTodos = (todos, oldTodos, ...classes) => {
             "todo-action-button",
             "todo-action-button-complete",
         );
+        addClass(
+            todoElementRevertButton,
+            "todo-action-button",
+            "todo-action-button-complete",
+        );
 
         if (document.getElementById(todo.id)) {
             todoElementLi.innerHTML = ''
         }
 
-        todoElementActions.appendChild(todoElementCompleteButton);
         todoElementActions.appendChild(todoElementDeleteButton);
 
         todoElementLi.appendChild(todoElementStatus);
@@ -144,10 +167,44 @@ const renderTodos = (todos, oldTodos, ...classes) => {
                 { once: true },
             );
         }
-        if (document.getElementById(todo.id)) return;
 
-        // @ts-ignore
-        todoList.appendChild(todoElementLi);
+        const currentPageTodo = document.getElementById(todo.id)
+        switch (todo.status) {
+            case "new":
+                if (currentPageTodo) {
+                    if (currentPageTodo.getAttribute("status") === 'new') return
+                    todoElementLi.setAttribute('status', todo.status)
+
+                    // @ts-ignore
+                    completedList.removeChild(currentPageTodo)
+                    // @ts-ignore
+                    todoList.appendChild(todoElementLi)
+                    return;
+                }
+
+                todoElementLi.setAttribute('status', todo.status)
+                // @ts-ignore
+                todoList.appendChild(todoElementLi)
+                break;
+            case "completed":
+                if (currentPageTodo) {
+                    if (currentPageTodo.getAttribute("status") === 'completed') return
+                    todoElementLi.setAttribute('status', todo.status)
+
+                    // @ts-ignore
+                    todoList.removeChild(currentPageTodo)
+                    // @ts-ignore
+                    completedList.appendChild(todoElementLi)
+                    return
+                }
+
+                todoElementLi.setAttribute('status', todo.status)
+                // @ts-ignore
+                completedList.appendChild(todoElementLi)
+                break
+            default:
+                break;
+        }
     });
 
     oldTodos.forEach((oldTodo) => {
@@ -171,6 +228,7 @@ const renderTodos = (todos, oldTodos, ...classes) => {
 };
 
 addClass(todoList, "todo-list");
+addClass(completedList, "todo-list")
 
 todoInput?.addEventListener("input", (ev) => {
     if (ev.target) {
@@ -192,7 +250,7 @@ todoDate?.addEventListener("change", ev => {
     }
 })
 
-todoButton?.addEventListener("click", () => {
+const addNewTodo = () => {
     // @ts-ignore
     const newTodoInput = todoInput?.value;
     // @ts-ignore
@@ -227,8 +285,16 @@ todoButton?.addEventListener("click", () => {
     todosState.push(newTodo);
 
     renderTodos(todosState, oldTodos, "new-todo");
-});
+}
 
+todoButton?.addEventListener("click", addNewTodo);
+
+newTodoDiv?.addEventListener("keypress", (ev) => {
+    console.log(ev.key)
+    if (ev.key === "Enter") {
+        addNewTodo()
+    }
+})
 const headerDate = document.getElementById("header-date")
 // @ts-ignore
 headerDate.textContent = (new Date()).toDateString()
