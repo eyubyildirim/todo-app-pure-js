@@ -218,8 +218,13 @@ const renderTodos = (todos, oldTodos, ...classes) => {
                 "animationend",
                 () => {
                     todoToRemove.classList.remove(...classes);
-                    // @ts-ignore
-                    todoList.removeChild(todoToRemove);
+
+                    if (todoToRemove.getAttribute("status") === "completed")
+                        // @ts-ignore
+                        completedList.removeChild(todoToRemove);
+                    else if (todoToRemove.getAttribute("status") === "new")
+                        // @ts-ignore
+                        todoList.removeChild(todoToRemove);
                 },
                 { once: true },
             );
