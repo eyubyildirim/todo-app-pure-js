@@ -9,19 +9,22 @@ const todosState = JSON.parse(localStorage.getItem("todosList")) ?? [];
  * @property {string} id - A unique identifier.
  * @property {string} desc - The content of the todo.
  * @property {number} createdAt - Timestamp of creation date
+ * @property {number} dueDate - Timestamp of due date
  * @property {string} status - Status of the todo
  */
 
 const todoInput = document.getElementById("new-todo-input");
+const todoDate = document.getElementById("new-todo-date")
 const todoButton = document.getElementById("new-todo-button");
 const todoList = document.getElementById("todo-list");
+const newTodoDiv = document.getElementById("new-todo-div")
 
 todoList?.addEventListener('click', /** @type {(e: MouseEvent) => any} */(e) => {
     if (e.target instanceof HTMLElement) {
         console.log(e.target.id)
         if (e.target.id.includes("delete")) {
             // @ts-ignore
-            const todoIndex = todosState.findIndex(v => v.id === e.target.id.replace('complete-button-', ''))
+            const todoIndex = todosState.findIndex(v => v.id === e.target.id.replace('delete-button-', ''))
             const oldTodos = structuredClone(todosState)
             todosState.splice(todoIndex, 1)
             renderTodos(todosState, oldTodos, "remove-todo");
@@ -68,7 +71,7 @@ const renderTodos = (todos, oldTodos, ...classes) => {
         todoElementDesc.id = "desc-" + todo.id
 
         const todoElementDate = document.createElement("h6");
-        todoElementDate.textContent = new Date(todo.createdAt).toLocaleDateString();
+        todoElementDate.textContent = new Date(todo.dueDate).toDateString();
         todoElementDate.id = "date-" + todo.id
 
         const todoElementStatus = document.createElement("div");
@@ -126,20 +129,6 @@ const renderTodos = (todos, oldTodos, ...classes) => {
         todoElementActions.appendChild(todoElementCompleteButton);
         todoElementActions.appendChild(todoElementDeleteButton);
 
-        // todoElementDeleteButton.addEventListener("click", () => {
-        //     const oldTodos = [...todos]
-        //     todos.splice(todos.indexOf(todo), 1);
-        //     renderTodos(todos, oldTodos, "remove-todo");
-        // });
-        // todoElementCompleteButton.addEventListener("click", () => {
-        //     const oldTodos = [...todos]
-        //     todos[todos.indexOf(todo)] = {
-        //         ...todo,
-        //         status: 'complete'
-        //     }
-        //     renderTodos(todos, oldTodos)
-        // });
-
         todoElementLi.appendChild(todoElementStatus);
         todoElementLi.appendChild(todoElementDesc);
         todoElementLi.appendChild(todoElementDate);
@@ -183,9 +172,45 @@ const renderTodos = (todos, oldTodos, ...classes) => {
 
 addClass(todoList, "todo-list");
 
+todoInput?.addEventListener("input", (ev) => {
+    if (ev.target) {
+        if (newTodoDiv?.classList.contains("new-todo-div-error")) {
+            // @ts-ignore
+            document.getElementById("new-todo-error-message").textContent = ""
+            newTodoDiv.classList.remove("new-todo-div-error")
+        }
+    }
+})
+
+todoDate?.addEventListener("change", ev => {
+    if (ev.target) {
+        if (newTodoDiv?.classList.contains("new-todo-div-error")) {
+            // @ts-ignore
+            document.getElementById("new-todo-error-message").textContent = ""
+            newTodoDiv.classList.remove("new-todo-div-error")
+        }
+    }
+})
+
 todoButton?.addEventListener("click", () => {
     // @ts-ignore
     const newTodoInput = todoInput?.value;
+    // @ts-ignore
+    const newTodoDate = todoDate?.value;
+
+    if (!newTodoInput || newTodoInput.length < 3) {
+        newTodoDiv?.classList.add("new-todo-div-error")
+        // @ts-ignore
+        document.getElementById("new-todo-error-message").textContent = "Todo description should be longer than 3 characters!"
+        return;
+    }
+
+    if (!newTodoDate || ((+new Date(newTodoDate)) < +new Date())) {
+        newTodoDiv?.classList.add("new-todo-div-error")
+        // @ts-ignore
+        document.getElementById("new-todo-error-message").textContent = "Due date should be after today!"
+        return;
+    }
 
     // @ts-ignore
     document.getElementById("new-todo-input").value = "";
@@ -194,6 +219,7 @@ todoButton?.addEventListener("click", () => {
         id: crypto.randomUUID(),
         desc: newTodoInput,
         createdAt: +new Date(),
+        dueDate: +new Date(newTodoDate),
         status: "new",
     };
 
@@ -203,5 +229,8 @@ todoButton?.addEventListener("click", () => {
     renderTodos(todosState, oldTodos, "new-todo");
 });
 
+const headerDate = document.getElementById("header-date")
+// @ts-ignore
+headerDate.textContent = (new Date()).toDateString()
 renderTodos(todosState, []);
 

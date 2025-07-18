@@ -8,10 +8,21 @@
 
 <body>
     <div id="root-div">
-        <h1>My Todos</h1>
-        <div>
-            <input type="text" id="new-todo-input" />
-            <button id="new-todo-button">Add</button>
+        <div class="header-div">
+            <h1 id="header-title">My Todos</h1>
+            <h3 id="header-date"></h3>
+        </div>
+        <div id="new-todo-div-error-wrapper">
+            <div id="new-todo-div" class="new-todo-div">
+                <input type="text" id="new-todo-input" placeholder="Add a new todo..." />
+                <div class="date-input-wrapper">
+                    <input type="date" id="new-todo-date" />
+                </div>
+                <button id="new-todo-button">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <p id="new-todo-error-message"></p>
         </div>
         <ul id="todo-list">
         </ul>
